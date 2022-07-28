@@ -6,12 +6,12 @@ Usage:
 Options:
   -v --verbose   Printing debugging/logging info
 
-If ReadCounts not specific then it defaults to 0
+If ReadCounts not specified then it defaults to 0
 
 ' -> doc
 
 library(docopt)
-argv <- docopt(doc,version='Get Event Clusters 0.9')
+argv <- docopt(doc,version='Get Event Clusters 1.0')
 if(is.null(argv$readCounts)) {
     readCounts=0
 } else {
@@ -22,6 +22,7 @@ verbose=argv$verbose
 
 suppressPackageStartupMessages({
     require(dplyr)
+    require(readr)
     require(purrr)
     require(fs)
     require(readxl)
@@ -49,12 +50,12 @@ read_events<-function(sampleManifest,vcfFolder) {
         bind_rows(.id="FILE") %>%
         mutate(FILE=basename(FILE)%>%gsub(".pre.ca.*","",.))
 
-    full_join(vm,vs) %>%
+    full_join(vm,vs,by = c("FILE", "VID")) %>%
         mutate(UUID=paste0(FILE,":",ID,":",VID)) %>%
         mutate(END=as.numeric(END)) %>%
         mutate(RC=as.numeric(RC)) %>%
         arrange(factor(CHROM,levels=c(1:19,"X","Y")),POS,END) %>%
-        left_join(manifest) %>%
+        left_join(manifest,by = "SAMPLE") %>%
         select(CHROM,POS,END,UUID,SAMPLE,GROUP,MOUSE,BRAIN_AREA,GENOTYPE,everything())
 
 }
