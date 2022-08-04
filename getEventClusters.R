@@ -1,23 +1,20 @@
 'Get Event Clusters.
 
 Usage:
-  getEventClusters.R [options] <sampleManifest> <vcfFolder> [<readCounts>]
+  getEventClusters.R [options] <sampleManifest> <vcfFolder>
 
 Options:
   -v --verbose   Printing debugging/logging info
-
-If ReadCounts not specified then it defaults to 0
+  --rc=<rc>      Set readCounts/size filter [default: 0]
+  --rv=<rv>      Set RV filter [default: 0]
 
 ' -> doc
 
 library(docopt)
 argv <- docopt(doc,version='Get Event Clusters 1.0')
-if(is.null(argv$readCounts)) {
-    readCounts=0
-} else {
-    readCounts=as.numeric(argv$readCounts)
-}
 
+rcFilter=as.numeric(argv$rc)
+rvFilter=as.numeric(argv$rv)
 verbose=argv$verbose
 
 suppressPackageStartupMessages({
@@ -32,11 +29,11 @@ suppressPackageStartupMessages({
 #   read_events<-function(sampleManifest,vcfFolder)
 source("P5BrainReorg/tools.R")
 
-filter_events<-function(events,readCounts) {
+filter_events<-function(events) {
     events %>%
-        filter(FILTER=="PASS" & RC>=readCounts) %>%
         mutate(SIZE=END-POS) %>%
-        select(CHROM,POS,END,UUID,SIZE,SAMPLE,GROUP,MOUSE,BRAIN_AREA,GENOTYPE,RC)
+        filter(FILTER=="PASS" & RC/SIZE>=rcFilter & RV>=rvFilter) %>%
+        select(CHROM,POS,END,UUID,SIZE,SAMPLE,GROUP,MOUSE,BRAIN_AREA,GENOTYPE,RC,RV)
 }
 
 clique_to_event_table<-function(cliques,events_filtered) {
@@ -63,7 +60,11 @@ get_event_clusters<-function(sampleManifest,vcfFolder,readCounts) {
 
     events = read_events(sampleManifest,vcfFolder)
 
-    events_filtered = filter_events(events,readCounts)
+    events_filtered = filter_events(events)
+
+    if(nrow(events_filtered)==0) {
+        return(NULL)
+    }
 
     events_intersect=genome_intersect(events_filtered,events_filtered,by=c("CHROM","POS","END")) %>% filter(POS!=END)
 
@@ -72,6 +73,10 @@ get_event_clusters<-function(sampleManifest,vcfFolder,readCounts) {
         mutate(SIZE_AVG=(SIZE.x+SIZE.y)/2,PCT_OVER=(END-POS)/SIZE_AVG) %>%
         filter((SIZE.x<1e5 & SIZE.y<1e5) | PCT_OVER>0.001) %>%
         select(matches("UUID"))
+
+    if(nrow(edges)==0) {
+        return(NULL)
+    }
 
     eventGraph=graph_from_data_frame(edges,directed=F)
 
@@ -85,7 +90,14 @@ get_event_clusters<-function(sampleManifest,vcfFolder,readCounts) {
 
 clusters=get_event_clusters(argv$sampleManifest,argv$vcfFolder,readCounts)
 
-outFile=cc("clusters","","Small,Large_0.001_Overlap","","RC",sprintf("%04d",readCounts),".csv")
+if(!is.null(clusters) && nrow(clusters)>0) {
 
-write_csv(clusters,outFile)
+    outFile=cc("clusters","","Small,Large_0.001_Overlap","",
+                    "RCFilter",sprintf("%05d",rcFilter),
+                    "RVFilter",sprintf("%05d",rvFilter),
+                    ".csv")
+
+    write_csv(clusters,outFile)
+
+}
 

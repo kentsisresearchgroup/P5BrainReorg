@@ -21,10 +21,19 @@ read_events<-function(sampleManifest,vcfFolder) {
         bind_rows(.id="FILE") %>%
         mutate(FILE=basename(FILE)%>%gsub(".pre.ca.*","",.))
 
+    #
+    # Get VCF fields that are simple numbers by looking at header
+    #
+    numberFields=grep("Type=(Integer|Float)",vv[[1]]$header,value=T) %>%
+        grep("Number=1",.,value=T) %>%
+        str_extract("ID=[^,]+,") %>%
+        gsub("^ID=","",.) %>%
+        gsub(",$","",.)
+    # cat("NumberFields =",numberFields,"\n")
+
     full_join(vm,vs,by = c("FILE", "VID")) %>%
         mutate(UUID=paste0(FILE,":",ID,":",VID)) %>%
-        mutate(END=as.numeric(END)) %>%
-        mutate(RC=as.numeric(RC)) %>%
+        mutate_at(numberFields,as.numeric) %>%
         arrange(factor(CHROM,levels=c(1:19,"X","Y")),POS,END) %>%
         left_join(manifest,by = "SAMPLE") %>%
         select(CHROM,POS,END,UUID,SAMPLE,GROUP,MOUSE,BRAIN_AREA,GENOTYPE,everything())
