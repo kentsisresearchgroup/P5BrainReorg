@@ -7,6 +7,7 @@ Options:
   -v --verbose   Printing debugging/logging info
   --rc=<rc>      Set readCounts/size filter [default: 0]
   --rv=<rv>      Set RV filter [default: 0]
+  --vaf=<vaf>    Set VAF {RV/(RR+RV)} filter [default: 0]
 
 ' -> doc
 
@@ -15,6 +16,7 @@ argv <- docopt(doc,version='Get Event Clusters 1.0')
 
 rcFilter=as.numeric(argv$rc)
 rvFilter=as.numeric(argv$rv)
+vafFilter=as.numeric(argv$vaf)
 verbose=argv$verbose
 
 suppressPackageStartupMessages({
@@ -32,7 +34,7 @@ source("P5BrainReorg/tools.R")
 filter_events<-function(events) {
     events %>%
         mutate(SIZE=END-POS) %>%
-        filter(FILTER=="PASS" & RC/SIZE>=rcFilter & RV>=rvFilter) %>%
+        filter(FILTER=="PASS" & RC/SIZE>=rcFilter & RV>=rvFilter & RV/(RV+RR)>vafFilter) %>%
         select(CHROM,POS,END,UUID,SIZE,SAMPLE,GROUP,MOUSE,BRAIN_AREA,GENOTYPE,RC,RV)
 }
 
@@ -95,6 +97,7 @@ if(!is.null(clusters) && nrow(clusters)>0) {
     outFile=cc("clusters","","Small,Large_0.001_Overlap","",
                     "RCFilter",sprintf("%05d",rcFilter),
                     "RVFilter",sprintf("%05d",rvFilter),
+                    "VAFFilter",sprintf("%07.03f",round(100*vafFilter),3),
                     ".csv")
 
     write_csv(clusters,outFile)
