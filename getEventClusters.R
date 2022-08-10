@@ -58,7 +58,7 @@ clique_to_event_table<-function(cliques,events_filtered) {
 
 }
 
-get_event_clusters<-function(sampleManifest,vcfFolder,readCounts) {
+get_event_clusters<-function(sampleManifest,vcfFolder) {
 
     events = read_events(sampleManifest,vcfFolder)
 
@@ -90,14 +90,14 @@ get_event_clusters<-function(sampleManifest,vcfFolder,readCounts) {
 
 }
 
-clusters=get_event_clusters(argv$sampleManifest,argv$vcfFolder,readCounts)
+clusters=get_event_clusters(argv$sampleManifest,argv$vcfFolder)
 
 if(!is.null(clusters) && nrow(clusters)>0) {
 
     outFile=cc("clusters","","Small,Large_0.001_Overlap","",
                     "RCFilter",sprintf("%05d",rcFilter),
                     "RVFilter",sprintf("%05d",rvFilter),
-                    "VAFFilter",sprintf("%07.03f",round(100*vafFilter),3),
+                    "VAFFilter",sprintf("%07.03f",round(100*vafFilter,3)),
                     ".csv")
 
     write_csv(clusters,outFile)
