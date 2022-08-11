@@ -5,7 +5,7 @@ Usage:
 
 Options:
   -v --verbose   Printing debugging/logging info
-  -i=<ins> --ins=<ins> Insert Size [default: 250]
+  -i=<ins> --ins=<ins> Insert Size [default: 700]
   --rc=<rc>      Set readCounts/size filter [default: 0]
   --rv=<rv>      Set RV filter [default: 0]
   --vaf=<vaf>    Set VAF {RV/(RR+RV)} filter [default: 0]
@@ -74,8 +74,9 @@ get_event_clusters<-function(sampleManifest,vcfFolder) {
     evts_5p=events_filtered %>%
         mutate(
             SIDE='5p',
-            POS=POS-floor(insertSize/2),
             END=POS+floor(insertSize/2),
+            POS=POS-floor(insertSize/2),
+            SIZE=END-POS,
             UUID=cc(UUID,SIDE)
         )
 
@@ -84,17 +85,18 @@ get_event_clusters<-function(sampleManifest,vcfFolder) {
             SIDE='3p',
             POS=END-floor(insertSize/2),
             END=END+floor(insertSize/2),
+            SIZE=END-POS,
             UUID=cc(UUID,SIDE)
         )
 
-    events_edges=bind_rows(evts_5p,evts_3p) %>% select(-SIZE)
+    events_edges=bind_rows(evts_5p,evts_3p)
 
     events_intersect=genome_intersect(events_edges,events_edges,by=c("CHROM","POS","END")) %>% filter(POS!=END)
 
     edges=events_intersect %>%
         filter(UUID.x<UUID.y) %>%
-        mutate(PCT_OVER=(END-POS)/insertSize) %>%
-        filter(PCT_OVER>0.1) %>%
+        mutate(PCT_OVER=2*(END-POS)/(SIZE.x+SIZE.y)) %>%
+        filter(PCT_OVER>0.01) %>%
         select(matches("UUID"))
 
     if(nrow(edges)==0) {
@@ -117,7 +119,7 @@ if(!is.null(clusters) && nrow(clusters)>0) {
 
     outFile=cc("clusters","EDGE",
                     "INSSize",insertSize,
-                    "Small,Large_0.001_Overlap","",
+                    "0.01_Overlap","",
                     "RCFilter",sprintf("%05d",rcFilter),
                     "RVFilter",sprintf("%05d",rvFilter),
                     "VAFFilter",sprintf("%07.03f",round(100*vafFilter,3)),
