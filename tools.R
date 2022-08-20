@@ -62,6 +62,7 @@ read_mutect2_events<-function(sampleManifest,vcfFiles) {
         mutate(AF0=AD/D0)
 
     vm=map(vv,"vm") %>%
+        map(~mutate(.,CHROM=as.character(CHROM))) %>%
         bind_rows(.id="SID")
 
     #mutate_at(numberFields,as.numeric) %>%
