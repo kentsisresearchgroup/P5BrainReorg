@@ -41,6 +41,17 @@ read_events<-function(sampleManifest,vcfFolder) {
 
 }
 
+filesRead=0
+read_vcf_with_log<-function(vfile) {
+
+    cat(filesRead+1,"Reading",vfile)
+    filesRead <<- filesRead+1
+    vcf=read_vcf(vfile)
+    cat(" done\n")
+    vcf
+
+}
+
 read_mutect2_events<-function(sampleManifest,vcfFiles) {
 
     manifest=readxl::read_xlsx(sampleManifest) %>%
@@ -49,7 +60,7 @@ read_mutect2_events<-function(sampleManifest,vcfFiles) {
 
     if(verbose) cat("\nReading in vcf files ...")
 
-    vv=map(vcfFiles,read_vcf)
+    vv=map(vcfFiles,read_vcf_with_log)
     names(vv)=map(strsplit(gsub(".*(adult|embrionary).","",vcfFiles),"/"),1) %>% unlist
 
     if(verbose) cat(" done\n")
@@ -65,12 +76,22 @@ read_mutect2_events<-function(sampleManifest,vcfFiles) {
         map(~mutate(.,CHROM=as.character(CHROM))) %>%
         bind_rows(.id="SID")
 
-    #mutate_at(numberFields,as.numeric) %>%
+    #
+    # Get VCF fields that are simple numbers by looking at header
+    #
+    numberFields=grep("Type=(Integer|Float)",vv[[1]]$header,value=T) %>%
+        grep("Number=1",.,value=T) %>%
+        str_extract("ID=[^,]+,") %>%
+        gsub("^ID=","",.) %>%
+        gsub(",$","",.)
+    numberFields=intersect(numberFields,union(colnames(vs),colnames(vm)))
+    #cat("NumberFields =",numberFields,"\n")
 
     full_join(vm,vs,by = c("SID", "VID")) %>%
         select(-SAMPLE) %>%
         mutate(UUID=paste0(SID,":",VID)) %>%
         mutate(ETAG=paste0(CHROM,":",POS,":",REF,":",ALT)) %>%
+        mutate_at(numberFields,as.numeric) %>%
         arrange(factor(CHROM,levels=c(1:19,"X","Y")),POS) %>%
         left_join(manifest,by = "SID") %>%
         select(CHROM,POS,UUID,SAMPLE,SID,GROUP,MOUSE,BRAIN_AREA,GENOTYPE,everything())
