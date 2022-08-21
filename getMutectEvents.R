@@ -43,8 +43,35 @@ if(file.exists(cacheFile)) {
 
 }
 
-pg1=vv %>% mutate(AF0=AD/(AD+RD)) %>% ggplot(aes(AF,AF0,color=AD>0)) + theme_light() + geom_point(alpha=.5) + ggtitle(paste("CHR",19)) + coord_fixed()
-pg2=vv %>% mutate(AF0=AD/(AD+RD)) %>% ggplot(aes(AF,AF0,color=FILTER=="PASS")) + theme_light() + geom_point(alpha=.5) + ggtitle(paste("CHR",19)) + coord_fixed()
-pg3=vv %>% filter(FILTER=="PASS") %>% mutate(AF1=AD/(AD+RD)) %>% ggplot(aes(AF,AF0,color=AD>0)) + theme_light() + geom_point(alpha=.5) + ggtitle(paste("CHR",19,"PassOnly")) + coord_fixed()
+# pg1=vv %>% mutate(AF0=AD/(AD+RD)) %>% ggplot(aes(AF,AF0,color=AD>0)) + theme_light() + geom_point(alpha=.5) + ggtitle(paste("CHR",19)) + coord_fixed()
+# pg2=vv %>% mutate(AF0=AD/(AD+RD)) %>% ggplot(aes(AF,AF0,color=FILTER=="PASS")) + theme_light() + geom_point(alpha=.5) + ggtitle(paste("CHR",19)) + coord_fixed()
+# pg3=vv %>% filter(FILTER=="PASS") %>% mutate(AF1=AD/(AD+RD)) %>% ggplot(aes(AF,AF0,color=AD>0)) + theme_light() + geom_point(alpha=.5) + ggtitle(paste("CHR",19,"PassOnly")) + coord_fixed()
 
-vv %>% mutate(AF0=AD/(AD+RD),DP0=AD+RD)
+vv=vv %>%
+    mutate(AF0=AD/(AD+RD),DP0=AD+RD) %>%
+    filter(FILTER=="PASS" & AD>=adFilter & DP0>=dpFilter & AF0 >= afFilter)
+
+tbl=vv %>%
+    arrange(ETAG) %>%
+    group_by(ETAG) %>%
+    mutate(CLUSTER_LEN=n()) %>%
+    mutate(CLUSTER=cc("CLUSTER",cur_group_id())) %>%
+    filter(CLUSTER_LEN>2) %>%
+    ungroup %>%
+    arrange(CLUSTER_LEN) %>%
+    select(
+        CLUSTER,CLUSTER_LEN,
+        CHROM,POS,REF,ALT,
+        SID,GROUP,MOUSE,BRAIN_AREA,GENOTYPE,
+        DP0,AD,AF0
+        )
+
+if(nrow(tbl)>0) {
+    outFile=cc("cluster","Mutect2","PASS","",
+                "DPFilter",sprintf("%04d",dpFilter),
+                "ADFilter",sprintf("%04d",adFilter),
+                "VAFFilter",sprintf("%07.03f",round(100*afFilter,3)),
+                ".csv")
+
+    write_csv(tbl,outFile)
+}
