@@ -47,9 +47,22 @@ if(file.exists(cacheFile)) {
 # pg2=vv %>% mutate(AF0=AD/(AD+RD)) %>% ggplot(aes(AF,AF0,color=FILTER=="PASS")) + theme_light() + geom_point(alpha=.5) + ggtitle(paste("CHR",19)) + coord_fixed()
 # pg3=vv %>% filter(FILTER=="PASS") %>% mutate(AF1=AD/(AD+RD)) %>% ggplot(aes(AF,AF0,color=AD>0)) + theme_light() + geom_point(alpha=.5) + ggtitle(paste("CHR",19,"PassOnly")) + coord_fixed()
 
+vv.o=vv
+
+#vv=vv.o
 vv=vv %>%
+    mutate(RD2=REF_F1R2+REF_F2R1,AD2=ALT_F1R2+ALT_F2R1) %>%
+    filter(2*abs(RD2-RD)/(RD2+RD)<.1 & 2*abs(AD2-AD)/(AD2+AD)<.1) %>%
     mutate(AF0=AD/(AD+RD),DP0=AD+RD) %>%
-    filter(FILTER=="PASS" & AD>=adFilter & DP0>=dpFilter & AF0 >= afFilter)
+    filter(FILTER=="PASS" & AD>=adFilter) %>%
+    mutate(DPr=ifelse(AF<.4,round(RD/(1-AF),0),NA),DPa=round(AD/AF,0)) %>%
+    mutate(mDP=pmax(pmax(DP0,DPr),DPa)) %>%
+    mutate(AF0=AD/mDP) %>%
+    filter(mDP>=dpFilter & AF0 >= afFilter)
+
+    # select(SID,VID,CHROM,POS,REF,ALT,FILTER,RD,RD2,AD,AD2,AF,DP0,DPr,DPa)
+
+    #rowwise() %>% mutate(PCT.DIFF=(max(c(DP0,DPr,DPa),na.rm=T)-min(c(DP0,DPr,DPa),na.rm=T))/(mean(c(DP0,DPr,DPa),na.rm=T))) %>% arrange(desc(PCT.DIFF))
 
 tbl=vv %>%
     arrange(ETAG) %>%
@@ -67,7 +80,7 @@ tbl=vv %>%
         )
 
 if(nrow(tbl)>0) {
-    outFile=cc("cluster","Mutect2","PASS","",
+    outFile=cc("cluster","Mutect2","V2","PASS","",
                 "DPFilter",sprintf("%04d",dpFilter),
                 "ADFilter",sprintf("%04d",adFilter),
                 "VAFFilter",sprintf("%07.03f",round(100*afFilter,3)),
