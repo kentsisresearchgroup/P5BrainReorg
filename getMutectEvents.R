@@ -51,8 +51,12 @@ if(file.exists(cacheFile)) {
 
 vv.o=vv
 
+cat("N.events =",nrow(vv),"\n")
+
 if(FILTER_FLAG=="PassOnly")
     vv = vv %>% filter(FILTER=="PASS")
+
+cat("N.events =",nrow(vv),"\n")
 
 
 #vv=vv.o
@@ -65,6 +69,8 @@ vv=vv %>%
     mutate(mDP=pmax(pmax(DP0,DPr),DPa)) %>%
     mutate(AF0=AD/mDP) %>%
     filter(mDP>=dpFilter & AF0 >= afFilter)
+
+cat("N.events =",nrow(vv),"\n")
 
     # select(SID,VID,CHROM,POS,REF,ALT,FILTER,RD,RD2,AD,AD2,AF,DP0,DPr,DPa)
 
