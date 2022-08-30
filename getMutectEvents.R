@@ -45,10 +45,6 @@ if(file.exists(cacheFile)) {
 
 }
 
-# pg1=vv %>% mutate(AF0=AD/(AD+RD)) %>% ggplot(aes(AF,AF0,color=AD>0)) + theme_light() + geom_point(alpha=.5) + ggtitle(paste("CHR",19)) + coord_fixed()
-# pg2=vv %>% mutate(AF0=AD/(AD+RD)) %>% ggplot(aes(AF,AF0,color=FILTER=="PASS")) + theme_light() + geom_point(alpha=.5) + ggtitle(paste("CHR",19)) + coord_fixed()
-# pg3=vv %>% filter(FILTER=="PASS") %>% mutate(AF1=AD/(AD+RD)) %>% ggplot(aes(AF,AF0,color=AD>0)) + theme_light() + geom_point(alpha=.5) + ggtitle(paste("CHR",19,"PassOnly")) + coord_fixed()
-
 vv.o=vv
 
 cat("N.events =",nrow(vv),"\n")
@@ -71,10 +67,6 @@ vv=vv %>%
     filter(mDP>=dpFilter & AF0 >= afFilter)
 
 cat("N.events =",nrow(vv),"\n")
-
-    # select(SID,VID,CHROM,POS,REF,ALT,FILTER,RD,RD2,AD,AD2,AF,DP0,DPr,DPa)
-
-    #rowwise() %>% mutate(PCT.DIFF=(max(c(DP0,DPr,DPa),na.rm=T)-min(c(DP0,DPr,DPa),na.rm=T))/(mean(c(DP0,DPr,DPa),na.rm=T))) %>% arrange(desc(PCT.DIFF))
 
 tbl=vv %>%
     arrange(ETAG) %>%
