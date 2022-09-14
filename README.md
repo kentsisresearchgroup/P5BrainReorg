@@ -1,22 +1,17 @@
 # P5BrainReorg
 
-## Recurrence analysis of somatic neuronal DNA rearrangements
+Recurrence analysis of somatic neuronal DNA rearrangements
 
-### Analysis (2022-07-12)
+## Overview
 
-1) SNV Analysis
+A series of R-scripts which parse and filter the VCF files for overlapping events.
 
-    - Take VCF files from GATK #directory with specific file names. Analyze recurrence of somatic SNVs from GATK among 3 individuals and 3 brain regions. Generate script for producing bed files for counting statistics, where the script will include user-defined parameters for DP and VAF
+## Scripts
 
-2) Indel analysis
+- `getEventClusters.R` - Filter DELLY2 VCF files for events which pass for coverage and frequency. Filtered events are then intersect and maximal clusters are determined of mutually overlapping events.
 
-    - Same as SNV analysis but GCF files from Pindel #directory
-    - Script will include user-defined parameters for Pindel supporting reads
 
-3) Two types of SV analyses from VCF files from Delly2 #directory
+- `getEdgeClusters.R` - Filter DELLY2 events as in `getEventsClusters.R` but instead overlap regions centered on the edges of the original event and then intersect these edge regions for maximal cluster.
 
-    - Breakpoint specific. Overlap is insert size #Luz
-    - Region specific
-
-Script is going to iterate over the number of supporting reads (RC) from 3 to max, where max yields zero somatic variants in knockout versus wildtype brains
+- `getMutectEvents.R` - Filter MuTECT2 events for total coverate and frequency and then do a simple overlap of the events between samples.
 
