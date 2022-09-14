@@ -45,17 +45,11 @@ if(file.exists(cacheFile)) {
 
 }
 
-vv.o=vv
-
-cat("N.events =",nrow(vv),"\n")
+#vv.o=vv
 
 if(FILTER_FLAG=="PassOnly")
     vv = vv %>% filter(FILTER=="PASS")
 
-cat("N.events =",nrow(vv),"\n")
-
-
-#vv=vv.o
 vv=vv %>%
     mutate(RD2=REF_F1R2+REF_F2R1,AD2=ALT_F1R2+ALT_F2R1) %>%
     filter(2*abs(RD2-RD)/(RD2+RD)<.1 & 2*abs(AD2-AD)/(AD2+AD)<.1) %>%
@@ -65,8 +59,6 @@ vv=vv %>%
     mutate(mDP=pmax(pmax(DP0,DPr),DPa)) %>%
     mutate(AF0=AD/mDP) %>%
     filter(mDP>=dpFilter & AF0 >= afFilter)
-
-cat("N.events =",nrow(vv),"\n")
 
 tbl=vv %>%
     arrange(ETAG) %>%
