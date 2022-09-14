@@ -1,6 +1,6 @@
 # P5BrainReorg
 
-Recurrence analysis of somatic neuronal DNA rearrangements
+Recurrence analysis of somatic polyclonal DNA rearrangements as used in Jubierre et al "An ancient DNA transposase responsible for human brain development"
 
 ## Overview
 
