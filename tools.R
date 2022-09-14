@@ -1,7 +1,8 @@
 suppressPackageStartupMessages({
-    require(bictools)
     require(stringr)
 })
+
+source("read_vcf.R")
 
 read_events<-function(sampleManifest,vcfFolder) {
 
