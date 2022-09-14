@@ -2,9 +2,7 @@
 
 ## Recurrence analysis of somatic neuronal DNA rearrangements
 
-### BIC Project B-101-295
-
-### TASKS (2022-07-12)
+### Analysis (2022-07-12)
 
 1) SNV Analysis
 
