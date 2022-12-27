@@ -1,6 +1,6 @@
 # P5BrainReorg
 
-Recurrence analysis of somatic neuronal DNA rearrangements
+Recurrence analysis of somatic polyclonal DNA rearrangements as used in Jubierre et al "An ancient DNA transposase responsible for human brain development"
 
 ## Overview
 
@@ -15,3 +15,4 @@ A series of R-scripts which parse and filter the VCF files for overlapping event
 
 - `getMutectEvents.R` - Filter MuTECT2 events for total coverate and frequency and then do a simple overlap of the events between samples.
 
+- `counting_script_individual_regions_commented_2022_12_22.Rmd` - Filter files and counts the recurrent rearrangments shared among three individuals or three brain regions

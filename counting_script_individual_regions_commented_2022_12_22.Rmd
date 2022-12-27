@@ -1,0 +1,179 @@
+---
+title: "counting_trios"
+output: html_document
+date: '2022-07-29'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+
+# counts_per_region_and_individual takes a csv file and returns a vector of data frames
+# based on different filters and counters
+counts_per_region_and_individual <- function(file){
+  # read csv file into a data frame
+  df <- read.csv(file)
+  
+  # df <- read.csv('clusters__Small,Large_0.001_Overlap__RC_0870_.csv')
+  # df <- df1 %>% filter(CLUSTER_LEN==3)
+  
+  # Group the filter based on CLUSTER, CLUSTER_LEN, GENOTYPE and GROUP, counting the occurrence of each
+  # tuple, then filter out rows where the count is not the same as CLUSTER_LEN...
+  tmp <- df %>% dplyr::count(CLUSTER, CLUSTER_LEN, GENOTYPE, GROUP) %>% filter(n==CLUSTER_LEN)
+  
+  # ... then extract the cluster names for each element of the cartesian product (ko, wt) x (adult, embrionary)
+  adult_ko_clusters_list <- tmp %>% filter(GENOTYPE == "ko" & GROUP == "adult") %>% select(CLUSTER)
+  adult_wt_clusters_list <- tmp %>% filter(GENOTYPE == "wt" & GROUP == "adult") %>% select(CLUSTER)
+  embrionary_ko_clusters_list <- tmp %>% filter(GENOTYPE == "ko" & GROUP == "embrionary") %>% select(CLUSTER)
+  embrionary_wt_clusters_list <- tmp %>% filter(GENOTYPE == "wt" & GROUP == "embrionary") %>% select(CLUSTER)
+   
+  # extract from the base file all rows whose CLUSTER belongs to one of the previously calculated lists...
+  adult_ko_clusters <- df %>% filter(CLUSTER %in% adult_ko_clusters_list[[1]])
+  adult_wt_clusters <- df %>% filter(CLUSTER %in% adult_wt_clusters_list[[1]])
+  embrionary_ko_clusters <- df %>% filter(CLUSTER %in% embrionary_ko_clusters_list[[1]])
+  embrionary_wt_clusters <- df %>% filter(CLUSTER %in% embrionary_wt_clusters_list[[1]])
+  
+  
+  # ... then count the total number of unique individuals that appear 3 times
+  adult_ko_clusters_individuals <- adult_ko_clusters %>% dplyr::count(CLUSTER, MOUSE) %>% dplyr::count(CLUSTER) %>% filter(n==3) %>% nrow()
+  adult_wt_clusters_individuals <- adult_wt_clusters %>% dplyr::count(CLUSTER, MOUSE) %>% dplyr::count(CLUSTER) %>% filter(n==3) %>% nrow()
+  embrionary_ko_clusters_individuals <- embrionary_ko_clusters %>% dplyr::count(CLUSTER, MOUSE) %>% dplyr::count(CLUSTER) %>% filter(n==3) %>% nrow()
+  embrionary_wt_clusters_individuals <- embrionary_wt_clusters %>% dplyr::count(CLUSTER, MOUSE) %>% dplyr::count(CLUSTER) %>% filter(n==3) %>% nrow()
+  
+  
+  # %>% select(CLUSTER) # Change %>% nrow() for %>% select(CLUSTER) to get list of clusters
+  
+  
+  # ... and also count how many have unique regions
+  adult_ko_clusters_region <- adult_ko_clusters %>% dplyr::count(CLUSTER, BRAIN_AREA) %>% dplyr::count(CLUSTER) %>% filter(n==3) %>% nrow()
+  adult_wt_clusters_region <- adult_wt_clusters %>% dplyr::count(CLUSTER, BRAIN_AREA) %>% dplyr::count(CLUSTER) %>% filter(n==3) %>% nrow()
+  embrionary_ko_clusters_region <- embrionary_ko_clusters %>% dplyr::count(CLUSTER, BRAIN_AREA) %>% dplyr::count(CLUSTER) %>% filter(n==3) %>% nrow()
+  embrionary_wt_clusters_region <- embrionary_wt_clusters %>% dplyr::count(CLUSTER, BRAIN_AREA) %>% dplyr::count(CLUSTER) %>% filter(n==3) %>% nrow()
+  
+  
+  # Same calculations as above, but instead of the number of rows we return the CLUSTERs themselves
+    adult_ko_clusters_region_test <- adult_ko_clusters %>% dplyr::count(CLUSTER, BRAIN_AREA) %>% dplyr::count(CLUSTER) %>% filter(n==3) %>% select(CLUSTER)
+  adult_wt_clusters_region_test <- adult_wt_clusters %>% dplyr::count(CLUSTER, BRAIN_AREA) %>% dplyr::count(CLUSTER) %>% filter(n==3) %>% select(CLUSTER)
+  embrionary_ko_clusters_region_test <- embrionary_ko_clusters %>% dplyr::count(CLUSTER, BRAIN_AREA) %>% dplyr::count(CLUSTER) %>% filter(n==3) %>% select(CLUSTER)
+  embrionary_wt_clusters_region_test <- embrionary_wt_clusters %>% dplyr::count(CLUSTER, BRAIN_AREA) %>% dplyr::count(CLUSTER) %>% filter(n==3) %>% select(CLUSTER)
+  
+    adult_ko_clusters_individuals_test <- adult_ko_clusters %>% dplyr::count(CLUSTER, MOUSE) %>% dplyr::count(CLUSTER) %>% filter(n==3) %>% select(CLUSTER)
+  adult_wt_clusters_individuals_test <- adult_wt_clusters %>% dplyr::count(CLUSTER, MOUSE) %>% dplyr::count(CLUSTER) %>% filter(n==3) %>% select(CLUSTER)
+  embrionary_ko_clusters_individuals_test <- embrionary_ko_clusters %>% dplyr::count(CLUSTER, MOUSE) %>% dplyr::count(CLUSTER) %>% filter(n==3) %>% select(CLUSTER)
+  embrionary_wt_clusters_individuals_test <- embrionary_wt_clusters %>% dplyr::count(CLUSTER, MOUSE) %>% dplyr::count(CLUSTER) %>% filter(n==3) %>% select(CLUSTER)
+  
+  
+  # Return all the calculations
+  return(c(
+    adult_ko_clusters_individuals, 
+    adult_wt_clusters_individuals, 
+    embrionary_ko_clusters_individuals,
+    embrionary_wt_clusters_individuals, 
+    adult_ko_clusters_region, 
+    adult_wt_clusters_region, 
+    embrionary_ko_clusters_region, 
+    embrionary_wt_clusters_region, 
+    adult_ko_clusters_list, 
+    adult_wt_clusters_list, 
+    embrionary_ko_clusters_list, 
+    embrionary_wt_clusters_list, 
+    adult_ko_clusters_region_test, 
+    adult_wt_clusters_region_test, 
+    embrionary_ko_clusters_region_test, 
+    embrionary_wt_clusters_region_test, 
+    adult_ko_clusters_individuals_test, 
+    adult_wt_clusters_individuals_test, 
+    embrionary_ko_clusters_individuals_test, 
+    embrionary_wt_clusters_individuals_test))
+  
+   
+}
+
+
+# Initialize vectors for later
+VAF_vector <- c()
+RC_vector <- c()
+RV_vector <- c()
+adult_ko_clusters_individuals_vector <- c()
+adult_wt_clusters_individuals_vector <- c()
+embrionary_ko_clusters_individuals_vector <- c()
+embrionary_wt_clusters_individuals_vector <- c()
+adult_ko_clusters_region_vector <- c()
+adult_wt_clusters_region_vector <- c()
+embrionary_ko_clusters_region_vector <- c()
+embrionary_wt_clusters_region_vector <- c()
+
+# Initialize a counter to track progress during execution
+counter <- 0
+
+# Create an empty data.frame with 5 named columns to store individuals data
+individuals_df <- data.frame(matrix(nrow=0, ncol = 5))
+colnames(individuals_df) <- c("VAF","RC","RV", "GENOTYPE_AND_GROUP", "COUNT")
+
+# Create an empty data.frame with 5 named columns to store regions data
+region_df <- data.frame(matrix(nrow=0, ncol = 5))
+colnames(region_df) <- c("VAF", "RC","RV","GENOTYPE_AND_GROUP", "COUNT")
+
+# Calculate all the metrics for each CSV file in the working directory...
+for (f in list.files(pattern="*.csv")){
+  # Calculate all metrics
+  l <- counts_per_region_and_individual(f)
+  
+  # Extract VAF, RC and RV from file name
+  VAF <- as.integer(strsplit(f,"_")[[1]][13])
+  RC <- as.integer(strsplit(f,"_")[[1]][9])
+  RV <- as.integer(strsplit(f,"_")[[1]][11])
+
+  # Append data calculated in counts_per_region_and_individual to the corresponding data.frame
+  individuals_df[nrow(individuals_df) + 1,] <- c(VAF,RC,RV, "ko_adult", l[1])
+  individuals_df[nrow(individuals_df) + 1,] <- c(VAF,RC,RV, "wt_adult", l[2])
+  individuals_df[nrow(individuals_df) + 1,] <- c(VAF,RC,RV, "ko_embrionary", l[3])
+  individuals_df[nrow(individuals_df) + 1,] <- c(VAF,RC,RV, "wt_embrionary", l[4])
+
+  region_df[nrow(region_df) + 1,] <- c(VAF,RC,RV, "ko_adult", l[5])
+  region_df[nrow(region_df) + 1,] <- c(VAF,RC,RV, "wt_adult", l[6])
+  region_df[nrow(region_df) + 1,] <- c(VAF,RC,RV, "ko_embrionary", l[7])
+  region_df[nrow(region_df) + 1,] <- c(VAF,RC,RV, "wt_embrionary", l[8])
+  
+  # Append VAF, RC and RV to their corresponding vectors 
+  VAF_vector <- c(VAF_vector, VAF)
+  RC_vector <- c(RC_vector, RC)  
+  RV_vector <- c(RV_vector, RV)
+
+  # Append data calculated in counts_per_region_and_individual to the corresponding vector
+  adult_ko_clusters_individuals_vector <- c(adult_ko_clusters_individuals_vector, l[1])
+  adult_wt_clusters_individuals_vector <- c(adult_wt_clusters_individuals_vector, l[2])
+  embrionary_ko_clusters_individuals_vector <- c(embrionary_ko_clusters_individuals_vector, l[3])
+  embrionary_wt_clusters_individuals_vector <- c(embrionary_wt_clusters_individuals_vector, l[4])
+  adult_ko_clusters_region_vector <- c(adult_ko_clusters_region_vector, l[5])
+  adult_wt_clusters_region_vector <- c(adult_wt_clusters_region_vector, l[6])
+  embrionary_ko_clusters_region_vector <- c(embrionary_ko_clusters_region_vector, l[7])
+  embrionary_wt_clusters_region_vector <- c(embrionary_wt_clusters_region_vector, l[8])
+  
+  # Track execution progress: each increment is one more file processed
+  counter <- counter + 1
+  print(counter)
+  
+}
+
+# Merge all the data into one data.frame, containing all the counts for
+# each file and their corresponding VAF, RC and RV values ...
+counter_df <- data.frame(
+  VAF_vector, 
+  RC_vector, 
+  RV_vector, 
+  unlist(adult_ko_clusters_individuals_vector),
+  unlist(adult_wt_clusters_individuals_vector),
+  unlist(embrionary_ko_clusters_individuals_vector),
+  unlist(embrionary_wt_clusters_individuals_vector),
+  unlist(adult_ko_clusters_region_vector),
+  unlist(adult_wt_clusters_region_vector),
+  unlist(embrionary_ko_clusters_region_vector),
+  unlist(embrionary_wt_clusters_region_vector)
+)
+
+# ... and finally write the results into a csv
+write.csv(counter_df, "count.csv")
